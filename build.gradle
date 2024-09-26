@@ -1,0 +1,173 @@
+buildscript {
+	repositories {
+		maven {
+			url "$ARTIFACTORY_CONTEXT_URL/plugins-release"
+			credentials {
+				username = "$ARTIFACTORY_USER"
+				password = "$ARTIFACTORY_PASSWORD"
+			}
+			allowInsecureProtocol = true
+		}
+	}
+	dependencies {
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:$SPRING_BOOT_VERSION"
+		classpath "com.tivo:tivo-docker-plugin:$DOCKER_PLUGIN_VERSION"
+		classpath ("org.openapitools:openapi-generator-gradle-plugin:$OPENAPI_GENERATOR_VERSION")
+
+	}
+}
+
+plugins {
+	id 'org.springframework.boot' version "$SPRING_BOOT_VERSION"
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+
+}
+
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'tivo-docker'
+apply plugin: 'jacoco'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'org.openapi.generator'
+
+
+compileJava {
+	sourceCompatibility = 17
+	targetCompatibility = 17
+}
+
+// Archives base name
+archivesBaseName = "coupon-management-system"
+project.ext.yamlFileName = "${archivesBaseName}.yaml"
+project.ext.modelBasePath = "com/tivo/coupon-management-system/model"
+
+repositories {
+	maven {
+		url "$ARTIFACTORY_CONTEXT_URL/libs-release"
+		credentials {
+			username = "$ARTIFACTORY_USER"
+			password = "$ARTIFACTORY_PASSWORD"
+		}
+		allowInsecureProtocol = true
+	}
+	mavenCentral()  // Also use Maven Central as a fallback
+}
+tasks.named("jar") {
+	enabled = false
+}
+
+dependencies {
+	// Spring dependencies
+	implementation("org.springframework.boot:spring-boot-starter:$SPRING_BOOT_VERSION")
+	implementation("org.springframework.boot:spring-boot-starter-web:$SPRING_BOOT_VERSION")
+	implementation("org.springframework.boot:spring-boot-starter-actuator:$SPRING_BOOT_VERSION")
+	implementation("org.springframework.boot:spring-boot-starter-validation:3.3.3")
+
+	// OpenAPI and Swagger dependencies
+	implementation(group: 'org.openapitools', name:'jackson-databind-nullable', version: JACKSONDATABIND_NULLABLE_VERSION)
+	implementation(group: 'org.springdoc', name: 'springdoc-openapi-starter-webflux-ui', version: SPRINGDOC_VERSION)
+	implementation 'org.webjars:swagger-ui:4.18.1'
+	implementation(group: 'org.openapitools', name:'jackson-databind-nullable', version: JACKSONDATABIND_NULLABLE_VERSION)
+
+	// AWS SDK
+	implementation "com.amazonaws:aws-java-sdk-dynamodb:1.12.300"
+	implementation("software.amazon.awssdk:dynamodb:$AWS_VERSION")
+	implementation("software.amazon.awssdk:dynamodb-enhanced:$AWS_VERSION")
+
+	// Lombok
+	implementation "org.projectlombok:lombok:$LOMBOK_VERSION"
+	annotationProcessor "org.projectlombok:lombok:$LOMBOK_VERSION"
+}
+//OpenAPI model generation
+openApiGenerate {
+	generatorName = "spring"
+	inputSpec = "${buildDir}/generated/coupons.yaml".toString()
+	outputDir = "$buildDir/generated".toString()
+	modelPackage = "org.tivo.aps.model"
+	generateModelTests = false
+	generateApiTests = false
+	configOptions = [
+			useSpringBoot3 : "true",
+			dateLibrary: "java8",
+			library: "spring-boot",
+			booleanGetterPrefix: "is",
+			generatedConstructorWithRequiredArgs: "false",
+			serializableModel: "true"
+
+	]
+	validateSpec = false
+	globalProperties = [
+			apis: "false",
+			models: ""
+	]
+
+}
+
+tasks.named("openApiGenerate") {
+	dependsOn(tasks.named("generateApiDocSchemaFile"))
+}
+
+openApiValidate {
+	inputSpec = "${buildDir}/generated/coupons.yaml".toString()
+}
+
+tasks.named("openApiValidate") {
+	dependsOn(tasks.named("openApiGenerate"))
+}
+
+//task to generate swagger apidoc schema file. ex. aps-federated-bodyconfig.yaml
+task 'generateApiDocSchemaFile', {
+	def baseSchemaDir = "${projectDir}/schema/v1"
+	inputs.files("${baseSchemaDir}/header.yaml",
+			"${baseSchemaDir}/tags.yaml",
+			"${baseSchemaDir}/paths-name.yaml",
+			fileTree( "${projectDir}/schema/v1/paths" ),
+			"${baseSchemaDir}/components-name.yaml",
+			"${baseSchemaDir}/parameters-name.yaml",
+			fileTree( "${projectDir}/schema/v1/parameters" ),
+			fileTree( "${projectDir}/schema/v1/headers" ),
+			"${baseSchemaDir}/schemas-name.yaml",
+			fileTree( "${projectDir}/schema/v1/schemas" ))
+	outputs.file( "${buildDir}/generated/coupons.yaml" )
+	doLast {
+		outputs.files.singleFile.withOutputStream { out ->
+			for ( file in inputs.files ) file.withInputStream {
+				out << it << '\n'
+			}
+		}
+	}
+}
+
+//task to generate only defined schema component as excluded-partners-schema.yaml
+task 'generateSchemaFile', {
+	inputs.files(fileTree( "${projectDir}/schema/schemas" ))
+	outputs.file( "${buildDir}/generated/coupons-schema.yaml" )
+	doLast {
+		outputs.files.singleFile.withOutputStream { out ->
+			for ( file in inputs.files ) file.withInputStream {
+				out << it << '\n'
+			}
+		}
+	}
+}
+
+task generateModel(dependsOn: ['generateApiDocSchemaFile', 'generateSchemaFile', 'openApiValidate', 'openApiGenerate'])
+
+compileJava.dependsOn(generateApiDocSchemaFile, generateSchemaFile, generateModel)
+
+
+tivoDocker {
+	imageName = 'coupon-management-system'
+	ownerEmail = 'yellowstone@xperi.com'
+	description = 'Implements something'
+}
+
+wrapper {
+	gradleVersion = '7.4'
+}
+
+

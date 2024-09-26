@@ -1,0 +1,76 @@
+// Support of dependency on locally deployed artifacts.
+// Should be applied to the same set of projects where we define artifactory and
+// repositories in the main build.gradle (usually allprojects or subprojects).
+allprojects {
+    // support of dependency on locally deployed artifacts
+    afterEvaluate {
+        // early access to project.properties breaks publishing extension
+        // so this has to be in afterEvaluate()
+        def localArtifacts = []
+        project.properties.keySet().each {
+            def matcher = it =~ /useLocal(.+)/
+            if (matcher) {
+                localArtifacts.add(matcher.group(1).toUpperCase())
+            }
+        }
+
+        // useLocal<ArtifactName> property means request to download artifact XXX from
+        // local repository. To do this we switch dependency of such artifact
+        // to version 'LOCALBUILD' and make it to be changing module.
+        if (localArtifacts) {
+            // add repository for local artifacts
+            repositories.mavenLocal()
+            logger.lifecycle("[${project.name}] useLocal${localArtifacts} properti(es) are detected. Maven local repository is added.")
+
+            // and add resolution rules to use them
+            configurations.all { conf ->
+                resolutionStrategy {
+                    eachDependency { details ->
+                        // <ArtifactName> may be just name or group:name
+                        if (localArtifacts.contains(details.requested.name.toUpperCase()) ||
+                                localArtifacts.contains("${details.requested.group}:${details.requested.name}".toUpperCase())
+                        ) {
+                            // Actually mavenLocal artifacts are not subject for Gradle cache
+                            // so we don't need to mark them as changing but this behavior
+                            // is not documented so for sanity let's set changing attribute
+                            // as well.
+                            // changing is property but ExternalModuleDependency constructor
+                            // doesn't parse it from input map so it is configured by closure
+                            details.useTarget(
+                                    project.dependencies.create(
+                                            group: details.requested.group, name: details.requested.name, version: 'LOCALBUILD', configuration: conf) {changing = true})
+                            logger.lifecycle("Using local \"${details.target.group}:${details.target.name}:${details.target.version}\" for ${details.requested}")
+                        }
+                    }
+
+                    // Assume that all changing modules are local and disable cache for them.
+                    // This allows pick up of just rebuilt artifact without updating its version.
+                    cacheChangingModulesFor 0, 'seconds'
+                }
+            }
+        }
+    }
+}
+
+// For local publish use special fixed version value. Other branches will
+// pick up it as changing module. This allows multibranch development
+// without increasing of version on each local change in base artifact
+gradle.taskGraph.whenReady { taskGraph ->
+    // We have to execute this only when task graph is formed to let
+    // subproject configure publications. But it is too late to patch
+    // publications here because their info is already copied into
+    // publishing tasks so we have to patch these tasks directly.
+    // In addition this (theoretically) allows correct execution of artifactoryPublish
+    // and publishToMavenLocal when both are used in the graph.
+    // In practice it seems that arttifactoryPublish task also gets versions
+    // from the publish*PublicationToMavenLocal project tasks so it is bad idea
+    // to mix them. Here we patch tasks only in taskGraph so with pure artifactoryPublish
+    // it is nothing to patch and publish is unaffected.
+    taskGraph.allTasks.each {
+        // Select local publish task via name. See http://gradle.org/docs/current/userguide/publishing_maven.html#publishing_maven:install for details
+        if (it.name ==~ /publish.+PublicationToMavenLocal/) {
+            logger.lifecycle("Switching ${it.path} to LOCALBUILD version.")
+            it.publication.version = 'LOCALBUILD'
+        }
+    }
+}

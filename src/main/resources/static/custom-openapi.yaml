@@ -1,0 +1,124 @@
+openapi: 3.0.1
+info:
+  title: Coupon Management API
+  version: 1.0.0
+  description: API for managing coupons
+paths:
+  /v1/coupons:
+    post:
+      summary: Store a new coupon
+      operationId: storeCoupon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Coupon'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+  /v1/coupons/{couponCode}/status:
+    get:
+      summary: Get coupon status
+      operationId: getCouponStatus
+      parameters:
+        - name: couponCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+  /v1/coupons/device/{deviceId}/status:
+    get:
+      summary: Get device status
+      operationId: getDeviceStatus
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+  /v1/coupons/claim:
+    get:
+      summary: Claim a coupon
+      operationId: claimCoupon
+      parameters:
+        - name: request
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ClaimRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+  /v1/coupons/all:
+    get:
+      summary: Get all coupons info
+      operationId: getAllCouponsInfo
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CouponInfo'
+components:
+  schemas:
+    Coupon:
+      type: object
+      properties:
+        couponCode:
+          type: string
+          description: Unique code for the coupon
+        expiryTime:
+          type: string
+          format: date-time
+          description: Expiration time of the coupon
+    ClaimRequest:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          description: ID of the device claiming the coupon
+    CouponInfo:
+      type: object
+      properties:
+        couponCode:
+          type: string
+          description: Unique code for the coupon
+        deviceId:
+          type: string
+          description: ID of the device that claimed the coupon
+        claimed:
+          type: boolean
+          description: Whether the coupon has been claimed
+        expired:
+          type: boolean
+          description: Whether the coupon has expired
+        expiryDate:
+          type: string
+          format: date-time
+          description: Expiration date of the coupon

@@ -1,0 +1,21 @@
+    ########################################################
+    # Coupon Common Parameters Definitions                  #
+    # Note: Use Indentation - 4 space indent is required.  #
+    ########################################################
+    couponCodeParamRequired:
+      in: path
+      name: couponCode
+      required: true
+      schema:
+        type: string
+        maxLength: 64
+      description: The unique code of the coupon.
+
+    deviceIdParamRequired:
+      in: path
+      name: deviceId
+      required: true
+      schema:
+        type: string
+        maxLength: 1024
+      description: The deviceId of the object claiming the coupon.

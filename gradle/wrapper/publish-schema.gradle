@@ -1,0 +1,60 @@
+import org.w3c.dom.Node
+
+// Java classes artifact is published for schema.
+project.ext.publishSchema = {
+
+    publishing.publications.create('mavenSchema', MavenPublication) { mavenPublication ->
+        from components.java
+        task schemaSourcesJar(type: Jar) {
+            archiveClassifier = 'sources'
+            from "${buildDir}/generated/src/main/java"
+        }
+
+        mavenPublication.artifact(schemaSourcesJar)
+        project.artifacts.add('archives', schemaSourcesJar)
+
+        task schemaJar(type: Jar) {
+            dependsOn compileJava
+            from sourceSets.main.output
+            include "${project.ext.modelBasePath}/**/*.class"
+        }
+        mavenPublication.artifact(schemaJar){
+            classifier "models"
+        }
+        project.artifacts.add('archives', schemaJar)
+
+        // Add the generated apidoc yaml file
+        def yamlFile = file("${buildDir}/generated/${archivesBaseName}.yaml")
+        mavenPublication.artifact(yamlFile)
+
+        // Add the generated schema yaml file
+        def schemaYamlFile = file("${buildDir}/generated/${archivesBaseName}-schema.yaml")
+        mavenPublication.artifact(schemaYamlFile) {
+            classifier "schema"
+        }
+
+        // Add the task to 'archives' artifacts. This is not used for publishing.
+        // The only effect is that "assemble" task will create this artifact as well.
+        project.artifacts.add('archives', yamlFile)
+        project.artifacts.add('archives', schemaYamlFile)
+    }
+
+    // schema publications to artifactoryPublish task
+    artifactoryPublish {
+        publishing {
+            publications {
+                mavenSchema(MavenPublication) {
+                    pom.withXml {
+                        Node pomNode = asNode() as Node
+                        pomNode.dependencies.'*'.findAll() {
+                            it.scope.text() == 'runtime'
+                        }.each() {
+                            it.parent().remove(it)
+                        }
+                    }
+                }
+            }
+        }
+        publications publishing.publications.mavenSchema
+    }
+}

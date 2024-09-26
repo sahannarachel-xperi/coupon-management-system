@@ -1,0 +1,9 @@
+########################################################
+# Tags Definitions                                     #
+# Note: Use Indentation - No space indent is required. #
+########################################################
+tags:
+  - name: coupons
+    description: >-
+      Endpoint that returns/processes information about coupons, including 
+      creating, claiming, and checking the status of coupons.

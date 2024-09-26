@@ -1,0 +1,50 @@
+    ########################################################
+    # Session Schema Definitions                           #
+    # Note: Use Indentation - 4 space indent is required.  #
+    ########################################################
+    Coupon:
+      description: >-
+        Details about the coupon.
+      type: object
+      required:
+        - couponCode
+      properties:
+        couponCode:
+          type: string
+          description: Unique code of the coupon.
+        expiryDate:
+          type: string
+          format: date-time
+          description: Expiry date and time of the coupon.
+
+    ClaimRequest:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          description: ID of the device claiming the coupon
+      required:
+        - deviceId
+
+    CouponInfo:
+      type: object
+      properties:
+        couponCode:
+          type: string
+          description: Unique code for the coupon
+        deviceId:
+          type: string
+          description: ID of the device that claimed the coupon
+        claimed:
+          type: boolean
+          description: Whether the coupon has been claimed
+        expired:
+          type: boolean
+          description: Whether the coupon has expired
+        expiryDate:
+          type: string
+          format: date-time
+          description: Expiration date of the coupon
+
+
+

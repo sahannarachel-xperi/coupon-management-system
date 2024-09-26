@@ -1,0 +1,90 @@
+    ########################################################
+    # Coupons Paths Definitions                             #
+    # Note: 4 space indentation is required.                #
+    ########################################################
+    /v1/coupons:
+      post:
+        summary: Store a new coupon
+        operationId: storeCoupon
+        tags:
+          - coupons
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coupon'
+        responses:
+          '200':
+            description: Successful operation
+            content:
+              application/json:
+                schema:
+                  type: string
+
+
+    /v1/coupons/claim:
+      get:
+        summary: To Claim a Coupon
+        operationId: claimCoupon
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimRequest'
+        responses:
+          '200':
+            description: Coupon claimed successfully
+            content:
+              application/json:
+                schema:
+                  type: string
+
+    /v1/coupons/{couponCode}/status:
+      get:
+        summary: Get coupon status
+        operationId: getCouponStatus
+        tags:
+          - coupons
+        parameters:
+          - $ref: '#/components/parameters/couponCodeParamRequired'
+        responses:
+          '200':
+            description: Successful operation
+            content:
+              application/json:
+                schema:
+                  type: string
+
+    /v1/coupons/device/{deviceId}/status:
+      get:
+        summary: Get device status
+        operationId: getDeviceStatus
+        tags:
+          - coupons
+        parameters:
+          - $ref: '#/components/parameters/deviceIdParamRequired'
+        responses:
+          '200':
+            description: Successful operation
+            content:
+              application/json:
+                schema:
+                  type: string
+
+    /v1/coupons/all:
+      get:
+        summary: Get all coupons info
+        operationId: getAllCouponsInfo
+        tags:
+          - coupons
+        responses:
+          '200':
+            description: Successful operation
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CouponInfo'

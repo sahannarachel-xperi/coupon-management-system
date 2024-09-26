@@ -1,0 +1,17 @@
+########################################################
+# Headers info                                         #
+# Note: Use Indentation - No space indent is required. #
+########################################################
+openapi: '3.0.0'
+info:
+  description: This is the REST API for the Coupon Management Service.
+  version: 1.0.0
+  title: Coupon Management API
+  contact:
+    email: sahannarachel.john@xperi.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: http://localhost:8080
+    description: Local development server
