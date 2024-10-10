@@ -1,4 +1,3 @@
-
 # Coupon Management Service
 
 ## Overview
@@ -54,10 +53,7 @@ The Coupon Management Service is a RESTful API designed to manage coupon codes w
 2. **Set Environment Variables**:
 
    ```bash
-   export amazon.dynamodb.endpoint=${DYNAMODB_ENDPOINT}
-   export amazon.aws.accesskey=${AWS_ACCESS_KEY}
-   export amazon.aws.secretkey=${AWS_SECRET_KEY}
-   export amazon.aws.region=${AWS_REGION}
+   eval $(minikube docker-env)
    ```
 
 3. **Build the Application**:
@@ -72,47 +68,53 @@ The Coupon Management Service is a RESTful API designed to manage coupon codes w
    docker build -t coupon-app:latest .
    ```
 
-5. **Tag Docker Image**:
+5. **Run Docker Registry**:
 
    ```bash
-   docker tag coupon-app:latest $(minikube ip):5000/coupon-app:latest
+   docker run -d -p 5000:5000 --restart=always --name registry registry:2
    ```
 
-6. **Push Docker Image**:
+6. **Tag Docker Image**:
 
    ```bash
-   docker push $(minikube ip):5000/coupon-app:latest
+   docker tag coupon-app:latest localhost:5000/coupon-app:latest
    ```
 
-7. **Deploy DynamoDB**:
+7. **Push Docker Image**:
+
+   ```bash
+   docker push localhost:5000/coupon-app:latest
+   ```
+
+8. **Deploy DynamoDB**:
 
    ```bash
    kubectl apply -f dynamodb-deployment.yaml
    ```
 
-8. **Deploy Coupon Management Application**:
+9. **Deploy Coupon Management Application**:
 
    ```bash
    kubectl apply -f coupon-app-deployment.yaml
    ```
 
-9. **Port Forward for Local DynamoDB**:
+10. **Port Forward for Local DynamoDB**:
 
-   ```bash
-   kubectl port-forward service/dynamodb-local 8000:8000
-   ```
+    ```bash
+    kubectl port-forward service/dynamodb-local 8000:8000
+    ```
 
-10. **Create DynamoDB Table**:
+11. **Create DynamoDB Table**:
 
-   ```bash
-   aws dynamodb create-table --table-name Coupons --attribute-definitions AttributeName=couponCode,AttributeType=S --key-schema AttributeName=couponCode,KeyType=HASH --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://localhost:8000
-   ```
+    ```bash
+    aws dynamodb create-table --table-name Coupons --attribute-definitions AttributeName=couponCode,AttributeType=S --key-schema AttributeName=couponCode,KeyType=HASH --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://localhost:8000
+    ```
 
-11. **Access the Application**:
+12. **Access the Application**:
 
-   ```bash
-   minikube service coupon-app --url
-   ```
+    ```bash
+    minikube service coupon-app --url
+    ```
 
 ## Running Locally
 
