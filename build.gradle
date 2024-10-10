@@ -8,12 +8,12 @@ buildscript {
 			}
 			allowInsecureProtocol = true
 		}
+		mavenCentral()
 	}
 	dependencies {
 		classpath "org.springframework.boot:spring-boot-gradle-plugin:$SPRING_BOOT_VERSION"
 		classpath "com.tivo:tivo-docker-plugin:$DOCKER_PLUGIN_VERSION"
-		classpath ("org.openapitools:openapi-generator-gradle-plugin:$OPENAPI_GENERATOR_VERSION")
-
+		classpath "org.openapitools:openapi-generator-gradle-plugin:$OPENAPI_GENERATOR_VERSION"
 	}
 }
 
@@ -21,9 +21,7 @@ plugins {
 	id 'org.springframework.boot' version "$SPRING_BOOT_VERSION"
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
-
 }
-
 
 apply plugin: 'java'
 apply plugin: 'application'
@@ -33,7 +31,6 @@ apply plugin: 'tivo-docker'
 apply plugin: 'jacoco'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'org.openapi.generator'
-
 
 compileJava {
 	sourceCompatibility = 17
@@ -54,34 +51,30 @@ repositories {
 		}
 		allowInsecureProtocol = true
 	}
-	mavenCentral()  // Also use Maven Central as a fallback
+	mavenCentral()
 }
+
 tasks.named("jar") {
 	enabled = false
 }
 
 dependencies {
 	// Spring dependencies
-	implementation("org.springframework.boot:spring-boot-starter:$SPRING_BOOT_VERSION")
-	implementation("org.springframework.boot:spring-boot-starter-web:$SPRING_BOOT_VERSION")
-	implementation("org.springframework.boot:spring-boot-starter-actuator:$SPRING_BOOT_VERSION")
-	implementation("org.springframework.boot:spring-boot-starter-validation:3.3.3")
+	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
 
 	// OpenAPI and Swagger dependencies
-	implementation(group: 'org.openapitools', name:'jackson-databind-nullable', version: JACKSONDATABIND_NULLABLE_VERSION)
-	implementation(group: 'org.springdoc', name: 'springdoc-openapi-starter-webflux-ui', version: SPRINGDOC_VERSION)
-	implementation 'org.webjars:swagger-ui:4.18.1'
-	implementation(group: 'org.openapitools', name:'jackson-databind-nullable', version: JACKSONDATABIND_NULLABLE_VERSION)
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 
-	// AWS SDK
+	// AWS SDK v1
 	implementation "com.amazonaws:aws-java-sdk-dynamodb:1.12.300"
-	implementation("software.amazon.awssdk:dynamodb:$AWS_VERSION")
-	implementation("software.amazon.awssdk:dynamodb-enhanced:$AWS_VERSION")
 
 	// Lombok
-	implementation "org.projectlombok:lombok:$LOMBOK_VERSION"
+	compileOnly "org.projectlombok:lombok:$LOMBOK_VERSION"
 	annotationProcessor "org.projectlombok:lombok:$LOMBOK_VERSION"
 }
+
 //OpenAPI model generation
 openApiGenerate {
 	generatorName = "spring"
@@ -169,5 +162,4 @@ tivoDocker {
 wrapper {
 	gradleVersion = '7.4'
 }
-
 
