@@ -25,9 +25,6 @@
                     message:
                       type: string
                       example: "Coupon stored successfully."
-                    coupon:
-                      $ref: '#/components/schemas/Coupon'
-
 
     /v1/coupons/claim:
       get:
