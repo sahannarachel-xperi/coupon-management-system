@@ -33,8 +33,8 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'org.openapi.generator'
 
 compileJava {
-	sourceCompatibility = 17
-	targetCompatibility = 17
+	sourceCompatibility = 21
+	targetCompatibility = 21
 }
 
 // Archives base name
@@ -160,6 +160,6 @@ tivoDocker {
 }
 
 wrapper {
-	gradleVersion = '7.4'
+	gradleVersion = '8.8'
 }
 
